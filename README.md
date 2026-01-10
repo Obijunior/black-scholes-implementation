@@ -14,7 +14,7 @@ uv sync
 
 **Files**
 - **Main script**: [src/main.py](src/main.py) — simple CLI that asks for a ticker and computes call/put prices.
-- **Data helpers**: [src/data.py](src/data.py) — functions: `calculate_annualized_volatility`, `stock_price`, and `risk_free_rate` (scrapes Treasury site).
+- **Data helpers**: [src/data.py](src/data.py) — functions should be fairly self-explanitory, but essentially grab live data for all the inputs for the model, after a user inputs the ticker and time to maturity
 - **Model**: [src/model.py](src/model.py) — `BlackScholesModel` with `call_price()` and `put_price()` methods.
 
 **Usage**
@@ -34,10 +34,12 @@ from src.data import calculate_annualized_volatility, stock_price, risk_free_rat
 S = stock_price("AAPL")
 sigma = calculate_annualized_volatility("AAPL")
 r = risk_free_rate(0.5)  # 0.5 years
-model = BlackScholesModel(S=S, K=270, T=0.5, r=r, sigma=sigma)
+model = BlackScholesModel(S=S, K=K, T=0.5, r=r, sigma=sigma)
 print("Call:", model.call_price())
 print("Put:", model.put_price())
 ```
 
 **Notes & Caveats**
-- `risk_free_rate` scrapes the U.S. Treasury website; it requires network access and may break if the site layout changes. 
+- `risk_free_rate` scrapes the U.S. Treasury website; it requires network access and may break if the site layout changes.
+- Only prices European options, may underprice American options
+- The model assumes constant volatility until expiration, which is rarely true 

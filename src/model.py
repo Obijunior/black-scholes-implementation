@@ -39,9 +39,9 @@ class BlackScholesModel:
         second_term = (self.r + (0.5 * (self.sigma ** 2))) * self.T
 
         numerator = first_term + second_term
-        denomimator = self.sigma * np.sqrt(self.T)
+        denominator = self.sigma * np.sqrt(self.T)
 
-        return (numerator / denomimator)
+        return (numerator / denominator)
     
     def d2(self):
         return self.d1() - (self.sigma * np.sqrt(self.T))
