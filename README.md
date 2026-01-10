@@ -34,6 +34,10 @@ from src.data import calculate_annualized_volatility, stock_price, risk_free_rat
 S = stock_price("AAPL")
 sigma = calculate_annualized_volatility("AAPL")
 r = risk_free_rate(0.5)  # 0.5 years
+
+# can be calculated automatically, or can be set manually
+K = data.strike_from_expiration(ticker, exp_date, strike_rule="ATM") 
+
 model = BlackScholesModel(S=S, K=K, T=0.5, r=r, sigma=sigma)
 print("Call:", model.call_price())
 print("Put:", model.put_price())
