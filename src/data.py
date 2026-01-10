@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from typing import Optional, Literal
+from typing import Optional, Literal, Tuple
 import datetime
 import math
 import requests
@@ -170,3 +170,77 @@ def risk_free_rate(
                 break
 
     return _to_continuous_rate(yT, comp=comp_assumption) if continuous else yT
+
+def _parse_expirations(ticker: str) -> list[datetime.date]:
+    t = yf.Ticker(ticker)
+    # yfinance gives strings like "2026-01-16"
+    return [datetime.date.fromisoformat(x) for x in t.options]
+
+
+def choose_expiration_from_T(ticker: str, T_years: float) -> datetime.date:
+    """
+    Map a user-supplied T (years) to the nearest available listed option expiration date.
+    """
+    if T_years <= 0:
+        raise ValueError("T_years must be > 0")
+
+    today = datetime.date.today()
+    target = today + datetime.timedelta(days=int(round(T_years * 365)))
+
+    expirations = _parse_expirations(ticker)
+    if not expirations:
+        raise RuntimeError(f"No option expirations found for ticker={ticker}")
+
+    # Choose expiration closest to the target date
+    return min(expirations, key=lambda d: abs((d - target).days))
+
+
+def strike_from_expiration(
+    ticker: str,
+    expiration: datetime.date,
+    *,
+    strike_rule: Literal["ATM", "OTM_PCT", "ITM_PCT"] = "ATM",
+    pct: float = 0.0,
+) -> float:
+    """
+    Pick a strike automatically from the option chain for a specific expiration.
+
+    - ATM: strike closest to spot
+    - OTM_PCT: call OTM by pct (e.g. pct=0.05 => nearest strike >= spot*(1+0.05))
+    - ITM_PCT: call ITM by pct (e.g. pct=0.05 => nearest strike <= spot*(1-0.05))
+
+    Returns the chosen strike (float).
+    """
+    t = yf.Ticker(ticker)
+    exp_str = expiration.isoformat()
+    chain = t.option_chain(exp_str)
+
+    # spot
+    spot = t.fast_info.get("last_price")
+    if spot is None:
+        spot = t.history(period="1d")["Close"].iloc[-1]
+    S = float(spot)
+
+    strikes = sorted(set(chain.calls["strike"]).union(set(chain.puts["strike"])))
+    strikes = [float(k) for k in strikes]
+    if not strikes:
+        raise RuntimeError(f"No strikes found for {ticker} exp={exp_str}")
+
+    if strike_rule == "ATM":
+        return min(strikes, key=lambda k: abs(k - S))
+
+    if pct <= 0:
+        raise ValueError("pct must be > 0 for OTM_PCT / ITM_PCT")
+
+    if strike_rule == "OTM_PCT":
+        target = S * (1.0 + pct)
+        candidates = [k for k in strikes if k >= target]
+        return candidates[0] if candidates else strikes[-1]  # clamp
+
+    if strike_rule == "ITM_PCT":
+        target = S * (1.0 - pct)
+        candidates = [k for k in strikes if k <= target]
+        return candidates[-1] if candidates else strikes[0]  # clamp
+
+    raise ValueError("Unknown strike_rule")
+
