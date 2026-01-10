@@ -38,7 +38,7 @@ def calculate_annualized_volatility(
     
     # Set default dates if not provided
     if end_date is None or start_date is None:
-        now = datetime.now()
+        now = datetime.datetime.now()
         start_date = (now - datetime.timedelta(days=lookback_days)).strftime('%Y-%m-%d')
         end_date = now.strftime('%Y-%m-%d')
     

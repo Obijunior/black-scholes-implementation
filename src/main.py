@@ -13,11 +13,11 @@ def main():
     model = BlackScholesModel(S=S, K=270, T=float(T), r=r, sigma=sigma)
     call_price = model.call_price()
     put_price = model.put_price()
-    
+
     print(f"Ticker: {ticker}")
     print(f"Stock Price: {S:.2f}")
-    print(f"Call Option Price: {call_price:.2f}")
-    print(f"Put Option Price: {put_price:.2f}")
+    print(f"Call Option Price: {call_price}")
+    print(f"Put Option Price: {put_price}")
 
 if __name__ == "__main__":
     main()
