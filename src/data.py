@@ -177,10 +177,8 @@ def _parse_expirations(ticker: str) -> list[datetime.date]:
     return [datetime.date.fromisoformat(x) for x in t.options]
 
 
+# Map a user-supplied T (years) to the nearest available listed option expiration date.
 def choose_expiration_from_T(ticker: str, T_years: float) -> datetime.date:
-    """
-    Map a user-supplied T (years) to the nearest available listed option expiration date.
-    """
     if T_years <= 0:
         raise ValueError("T_years must be > 0")
 
